@@ -3,40 +3,55 @@
 #include <string.h>
 #include <time.h>
 
+#define SPOMAN_MAX 21   //男子体育项目最大值
+#define SPOWOMAN_MAX 21 //女子体育项目最大值
+#define SCHOOL_MAX 300  //学校个数最大值
+
 struct Sports
 {
     int id;
     char name[20];
-    char sex[3];
     int score;
-    struct Sports *next;
+    int randflag;
 };
 
 struct SCHOOL
 {
     int id;
-    char name[33];
-    struct Sports *sphead;
+    char name[20];
+    int schoolscore;
+    int spomanscore;
+    int spowomanscore;
+    struct Sports spoman[SPOMAN_MAX];
+    struct Sports spowoman[SPOWOMAN_MAX];
     struct SCHOOL *next;
 };
-struct SCHOOL *head;
 
-void writecsv()
+void Writecsv()
 {
     FILE *fp;
-    int n, i, j, m, w, temp;
+    int n, i, j, m, w, temp, scanfflag;
     char schname[33], soprname[20], tip[300] = "输入学校名称";
     srand(time(NULL));
 
     fp = fopen("学校体育项目.csv", "w");
+    if (fp == NULL)
+    {
+        printf("学校体育项目.csv文件创建失败\n");
+        system("pause");
+        exit(1);
+    }
+
     fprintf(fp, "学校编号,学校名称");
-    printf("输入男子项目m,女子项目w\n(例如2,3),m>=0,w>=0:");
-    scanf("%d,%d", &m, &w);
-    if (m < 0 || w < 0)
-        while (m < 0 || w < 0)
+    printf("输入男子项目m,女子项目w(例如2,3)\n");
+    printf("0<=m<=%d,0<=w<=%d : ", SPOMAN_MAX, SPOWOMAN_MAX);
+    scanfflag = scanf("%d,%d", &m, &w);
+    if (scanfflag != 2 || m < 0 || m > SPOMAN_MAX || w < 0 || w > SPOWOMAN_MAX)
+        while (scanfflag != 2 || m < 0 || m > SPOMAN_MAX || w < 0 || w > SPOWOMAN_MAX)
         {
-            printf("请重新输入男子项目m,女子项目w:\n");
-            scanf("%d,%d", &m, &w);
+            fflush(stdin);
+            printf("输入不规范或w或m不在范围\n请重新输入男子项目m,女子项目w:\n");
+            scanfflag = scanf("%d,%d", &m, &w);
         }
 
     if (m)
@@ -44,6 +59,7 @@ void writecsv()
     for (i = 1; i <= m; i++)
     {
         scanf("%s", &soprname);
+        printf("男子项目%d写入成功\n", i);
         strcat(tip, " ");
         strcat(tip, soprname);
         fprintf(fp, ",%s", soprname);
@@ -54,13 +70,23 @@ void writecsv()
     for (i = 1; i <= w; i++)
     {
         scanf("%s", &soprname);
+        printf("女子项目%d写入成功\n", i);
         strcat(tip, " ");
         strcat(tip, soprname);
         fprintf(fp, ",%s", soprname);
     }
     fputc('\n', fp);
-    printf("输入参加运动会学校个数n：");
-    scanf("%d", &n);
+    printf("输入参加运动会学校个数n：\n");
+    printf("n的范围为1<= n <=%d\n", SCHOOL_MAX);
+    scanfflag = scanf("%d", &n);
+    if (scanfflag != 1 || n <= 0 || n > SCHOOL_MAX)
+        while (scanfflag != 1 || n <= 0 || n > SCHOOL_MAX)
+        {
+            fflush(stdin);
+            printf("输入不规范或n不在范围\n请重新输入参加运动会学校个数n:\n");
+            scanfflag = scanf("%d", &n);
+        }
+
     printf("%s", tip);
     printf("体育项目分数");
     printf("\n例如:山东工商学院 体育A分数 体育B分数 体育C分数 体育D分数 体育E分数\n");
@@ -89,12 +115,15 @@ void writecsv()
         fprintf(fp, ",%d", rand() % 2);
 
     fclose(fp); /*关闭文件*/
+    printf("数据文件\"学校体育项目.csv\"生成成功！\n");
+    printf("\"学校体育项目.csv\"文件位于: ");
+    system("echo %cd%");
 }
 
-void randwritecsv()
+void Randwritecsv()
 {
-    int schid, sporid, i, j, k;
-    int n, m, w, sch[300], spo[21], flag, score;
+    int schid, sporid, i, j, k, scanfflag;
+    int n, m, w, sch[SCHOOL_MAX], spo[SPOMAN_MAX], flag, score;
     FILE *scfp, *spfp, *fp;
     char schname[17], sporname[11];
 
@@ -102,44 +131,74 @@ void randwritecsv()
     spfp = fopen("sports.csv", "r");
     fp = fopen("学校体育项目.csv", "w");
 
+    if (scfp == NULL)
+    {
+        printf("schoolname.csv读取失败\n");
+        system("pause");
+        exit(1);
+    }
+    if (spfp == NULL)
+    {
+        printf("sports.csv读取失败\n");
+        system("pause");
+        exit(1);
+    }
+    if (fp == NULL)
+    {
+        printf("学校体育项目.csv文件创建失败\n");
+        system("pause");
+        exit(1);
+    }
+
     srand(time(NULL));
 
     printf("是否随机生成学校个数,男女体育项目个数?\n输入非0表示随机生成,输入0表示手动输入:\n");
-    scanf("%d", &flag);
+    scanfflag = scanf("%d", &flag);
+    if (scanfflag != 1)
+        while (scanfflag != 1)
+        {
+            fflush(stdin);
+            printf("输入不规范,请重新输入！\n");
+            scanfflag = scanf("%d", &flag);
+        }
+
     if (flag == 0)
     {
-        printf("请输入学校个数n(1<=n<=300)：");
-        scanf("%d", &n);
-        if (n > 300 || n < 1)
-            while (n > 300 || n < 1)
+        printf("请输入学校个数n(1<=n<=%d)：", SCHOOL_MAX);
+        scanfflag = scanf("%d", &n);
+        if (scanfflag != 1 || n > SCHOOL_MAX || n < 1)
+            while (scanfflag != 1 || n > SCHOOL_MAX || n < 1)
             {
-                printf("请重新输入学校个数n(1<=n<=300)：");
-                scanf("%d", &n);
+                fflush(stdin);
+                printf("请重新输入学校个数n(1<=n<=%d)：", SCHOOL_MAX);
+                scanfflag = scanf("%d", &n);
             }
 
-        printf("请输入男子体育项目个数m(0<=m<=21)：");
-        scanf("%d", &m);
-        if (m > 21 || m < 0)
-            while (m > 21 || m < 0)
+        printf("请输入男子体育项目个数m(0<=m<=%d)：", SPOMAN_MAX);
+        scanfflag = scanf("%d", &m);
+        if (scanfflag != 1 || m > SPOMAN_MAX || m < 0)
+            while (scanfflag != 1 || m > SPOMAN_MAX || m < 0)
             {
-                printf("请重新输入男子体育项目个数m(0<=m<=21)：");
-                scanf("%d", &m);
+                fflush(stdin);
+                printf("请重新输入男子体育项目个数m(0<=m<=%d)：", SPOMAN_MAX);
+                scanfflag = scanf("%d", &m);
             }
 
-        printf("请输入女子体育项目个数w(0<=w<=21)：");
-        scanf("%d", &w);
-        if (w > 21 || w < 0)
-            while (w > 21 || w < 0)
+        printf("请输入女子体育项目个数w(0<=w<=%d)：", SPOWOMAN_MAX);
+        scanfflag = scanf("%d", &w);
+        if (scanfflag != 1 || w > SPOWOMAN_MAX || w < 0)
+            while (scanfflag != 1 || w > SPOWOMAN_MAX || w < 0)
             {
-                printf("请重新输入男子体育项目个数w(0<=w<=21)：");
-                scanf("%d", &w);
+                fflush(stdin);
+                printf("请重新输入男子体育项目个数w(0<=w<=%d)：", SPOWOMAN_MAX);
+                scanfflag = scanf("%d", &w);
             }
     }
     else
     {
-        n = rand() % 300 + 1; //n范围 1-300
-        m = rand() % 22;      //m范围 0-21
-        w = rand() % 22;      //w范围 0-21
+        n = rand() % SCHOOL_MAX + 1;     //n范围 1-SCHOOL_MAX
+        m = rand() % (SPOMAN_MAX + 1);   //m范围 0-SPOMAN_MAX
+        w = rand() % (SPOWOMAN_MAX + 1); //w范围 0-SPOMAN_MAX
     }
 
     fprintf(fp, "学校编号,学校名字");
@@ -170,7 +229,7 @@ void randwritecsv()
     }
     for (j = 0; j < w; j++) //随机生成女子项目
     {
-        sporid = rand() % 20;
+        sporid = rand() % 21;
         while (1)
         {
             flag = 1; //标记
@@ -227,7 +286,7 @@ void randwritecsv()
     fprintf(fp, "1,1");     //前面两位为:1,1即为体育项目性别编号,后面0表示男,1表示女
     for (j = 0; j < m; j++) //输出男子项目标记
         fprintf(fp, ",%d", 0);
-    for (j; j < m + w; j++) //输出女子项目标记
+    for (j = 0; j < w; j++) //输出女子项目标记
         fprintf(fp, ",%d", 1);
     fputc('\n', fp);
 
@@ -238,28 +297,43 @@ void randwritecsv()
     fclose(spfp);
     fclose(scfp);
     fclose(fp);
+    printf("数据文件\"学校体育项目.csv\"生成成功！\n");
+    printf("\"学校体育项目.csv\"文件位于: ");
+    system("echo %cd%");
+}
+
+void Mainmenu()
+{
+    printf("实验一：\n");
+    printf("---------------------------------运动会分数统计---------------------------------\n");
+    printf("-------------------------------1.体育成绩文件生成-------------------------------\n");
+    printf("-                                                                              -\n");
+    printf("-                                                                              -\n");
+    printf("-                                                                              -\n");
+    printf("-                                                                              -\n");
+    printf("-                                                                              -\n");
+    printf("-                                                                              -\n");
+    printf("-                                                                              -\n");
+    printf("-                                                                              -\n");
+    printf("-------------------------------------------------------------------------------\n");
 }
 
 int main()
 {
     FILE *fp;
-    int command, com2;
+    int command, com2, scaflag;
     while (1)
     {
-        printf("实验一：\n");
-        printf("---------------------------------运动会分数统计---------------------------------\n");
-        printf("-------------------------------1.体育成绩文件生成-------------------------------\n");
-        printf("-                                                                              -\n");
-        printf("-                                                                              -\n");
-        printf("-                                                                              -\n");
-        printf("-                                                                              -\n");
-        printf("-                                                                              -\n");
-        printf("-                                                                              -\n");
-        printf("-                                                                              -\n");
-        printf("-                                                                              -\n");
-        printf("-------------------------------------------------------------------------------\n");
+        Mainmenu();
         printf("输入一个数选择功能：");
-        scanf("%d", &command);
+        scaflag = scanf("%d", &command);
+        if (scaflag != 1)
+            while (scaflag != 1)
+            {
+                fflush(stdin);
+                printf("输入不是数字,请重新输入！\n");
+                scaflag = scanf("%d", &command);
+            }
         switch (command)
         {
         case 1:
@@ -267,13 +341,18 @@ int main()
             printf("------------------------1.手动输入学校名字,体育项目及成绩-----------------------\n");
             printf("------------------------2.随机生成学校名字,体育项目及成绩-----------------------\n");
             printf("输入一个数选择功能：");
-            scanf("%d", &com2);
+            scaflag = scanf("%d", &com2);
+            if (scaflag != 1 || com2 < 1 || com2 > 2)
+                while (scaflag != 1 || com2 < 1 || com2 > 2)
+                {
+                    fflush(stdin);
+                    printf("输入的不是数字或输入的数不符合条件,请重新输入！\n");
+                    scaflag = scanf("%d", &com2);
+                }
             if (com2 == 1)
-                writecsv();
+                Writecsv();
             else if (com2 == 2)
-                randwritecsv();
-            else
-                printf("输入有误!!\n");
+                Randwritecsv();
             system("pause");
             system("cls");
             break;
