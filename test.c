@@ -1,17 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 int main()
 {
-    int scaflag, a, b;
-    scaflag = scanf("%d,%d", &a, &b);
-    if(scaflag != 2)
-        while (scaflag != 2)
+    FILE *fp;
+    int hangnum[300], i;
+    char A;
+    fp = fopen("学校体育项目.csv", "r");
+    if (fp == NULL)
+    {
+        printf("打开文件错误\n");
+        system("pause");
+        exit(1);
+    }
+    i = 0;
+    while (feof(fp) == 0)
+    {
+        A = fgetc(fp);
+        if (A == '\n')
         {
-            fflush(stdin);
-            printf("%d,%d,%d\n", a, b, scaflag);
-            scaflag = scanf("%d,%d", &a, &b);
+            hangnum[i] = (int)ftell(fp);
+            i++;
         }
-    printf("%d,%d,%d\n", a, b, scaflag);
+    }
+    hangnum[i] = (int)ftell(fp);
+    for (i; i >= 0 ; i--)
+        printf("%d\n", hangnum[i]);
     system("pause");
     return 0;
 }
